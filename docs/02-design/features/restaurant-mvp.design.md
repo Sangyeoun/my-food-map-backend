@@ -289,6 +289,8 @@ CREATE INDEX idx_restaurants_status ON restaurants(status);
 **Error Responses:**
 - `404 Not Found`: 존재하지 않는 restaurant_id
 
+**`tags` 필드 처리 정책**: `tags`가 요청 body에 포함되면 **전체 교체(replace)**로 처리한다. 즉, 요청에 담긴 태그 목록이 해당 restaurant의 최종 태그 목록이 되며(기존 매핑을 모두 삭제 후 재생성), 부분 추가/삭제는 지원하지 않는다. `tags` 필드 자체가 요청 body에 없으면 기존 태그를 그대로 유지한다.
+
 #### `DELETE /restaurants/{restaurant_id}`
 
 **Response (204 No Content)**
@@ -316,6 +318,8 @@ CREATE INDEX idx_restaurants_status ON restaurants(status);
 **Error Responses:**
 - `400 Bad Request`: `query` 파라미터 누락
 - `502 Bad Gateway`: Google Places API 호출 실패 (Client 예외를 Service가 변환)
+
+**재시도 정책**: `google_places_client`는 재시도를 수행하지 않는다(no retry). 타임아웃(5초)이나 오류 발생 시 즉시 예외를 발생시켜 Service가 502로 변환한다. Phase 1은 단일 사용자 수동 요청이므로, 실패 시 사용자가 검색을 다시 시도하는 것으로 충분하며 재시도 로직 도입은 과설계로 판단한다.
 
 ---
 
@@ -354,10 +358,10 @@ CREATE INDEX idx_restaurants_status ON restaurants(status);
 ## 7. Security Considerations
 
 - [x] Input validation: Pydantic Schema로 모든 요청 본문/쿼리 파라미터 검증
-- [ ] Authentication/Authorization: Phase 1 범위 아님 (Plan §7.2에서 확정)
+- [ ] Authentication/Authorization: Phase 1 범위 아님 — Plan §7.2에서 단일 사용자/인증 없음으로 사용자 확정. 근거: 서비스 소유자 본인만 사용하는 개인용 도구이며(Context Anchor WHO), 다중 사용자 지원은 Phase 2 이후 스코프
 - [x] Sensitive data 보호: `GOOGLE_PLACES_API_KEY`는 환경변수로만 관리, 응답 body에 노출 금지
-- [ ] HTTPS enforcement: 로컬 개발 단계 미적용, Infrastructure Repository에서 배포 시 처리
-- [ ] Rate Limiting: Phase 1 범위 아님 (단일 사용자, 개인용)
+- [ ] HTTPS enforcement: 로컬 개발 단계 미적용 — 근거: Phase 1은 로컬/개인 환경에서만 구동되며, 배포 시점의 HTTPS 적용은 Infrastructure Repository(리버스 프록시/인증서 관리) 책임 범위로, 본 Backend Repository의 애플리케이션 코드 변경 없이 처리 가능
+- [ ] Rate Limiting: Phase 1 범위 아님 — 근거: 단일 사용자가 개인 용도로만 호출하므로 남용(abuse) 시나리오가 존재하지 않음. 다만 Google Places API 자체의 쿼터 초과는 502로 노출되므로(§6.1) 별도 완화 없음
 
 ---
 
@@ -584,3 +588,4 @@ app/
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
 | 0.1 | 2026-09-08 | Initial draft | SY LEE |
+| 0.2 | 2026-09-10 | PATCH `tags` 교체 정책, Google Places 재시도 정책(no retry), §7 Security 근거 보완 | SY LEE |
