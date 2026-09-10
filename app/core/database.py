@@ -14,8 +14,14 @@ class Base(DeclarativeBase):
 
 
 def get_db() -> Generator[Session, None, None]:
+    # Request-scoped transaction: commit on success, rollback on exception.
+    # Repositories only flush(); this dependency owns the commit boundary.
     db = SessionLocal()
     try:
         yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
