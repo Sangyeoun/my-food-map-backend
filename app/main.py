@@ -1,7 +1,9 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.core.config import settings
 from app.core.exceptions import (
     DuplicateGooglePlaceIdError,
     ExternalApiError,
@@ -10,6 +12,14 @@ from app.core.exceptions import (
 from app.routers import places, restaurants
 
 app = FastAPI(title="My Food Map Backend", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(restaurants.router)
 app.include_router(places.router)

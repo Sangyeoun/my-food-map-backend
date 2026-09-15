@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,6 +13,7 @@ class RestaurantCreate(BaseModel):
     latitude: float
     longitude: float
     status: RestaurantStatus
+    visited_date: date | None = None
     my_rating: int | None = Field(default=None, ge=1, le=5)
     memo: str | None = None
     tags: list[str] = Field(default_factory=list)
@@ -22,6 +23,7 @@ class RestaurantUpdate(BaseModel):
     # Design Ref: §4.2 PATCH /restaurants/{id} — 모든 필드 optional, 제공된 필드만 수정
     # tags가 요청 body에 포함되면 전체 교체(replace) 정책 적용 (Design v0.2)
     status: RestaurantStatus | None = None
+    visited_date: date | None = None
     my_rating: int | None = Field(default=None, ge=1, le=5)
     memo: str | None = None
     tags: list[str] | None = None
@@ -35,6 +37,7 @@ class RestaurantResponse(BaseModel):
     latitude: float
     longitude: float
     status: RestaurantStatus
+    visited_date: date | None
     my_rating: int | None
     memo: str | None
     tags: list[str]

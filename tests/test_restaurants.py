@@ -36,12 +36,39 @@ def test_list_restaurants_filters_by_status(client):
     _create_restaurant(client, google_place_id="ChIJ-visited", status="VISITED")
     _create_restaurant(client, google_place_id="ChIJ-want", status="WANT_TO_GO")
 
-    response = client.get("/restaurants?status_filter=VISITED")
+    response = client.get("/restaurants?status=VISITED")
 
     assert response.status_code == 200
     results = response.json()["data"]
     assert len(results) == 1
     assert all(item["status"] == "VISITED" for item in results)
+
+
+def test_list_restaurants_filters_by_want_to_go_status(client):
+    # Scenario #2b: status=WANT_TO_GO 필터 적용
+    _create_restaurant(client, google_place_id="ChIJ-visited-2", status="VISITED")
+    _create_restaurant(client, google_place_id="ChIJ-want-2", status="WANT_TO_GO")
+
+    response = client.get("/restaurants?status=WANT_TO_GO")
+
+    assert response.status_code == 200
+    results = response.json()["data"]
+    assert len(results) == 1
+    assert all(item["status"] == "WANT_TO_GO" for item in results)
+
+
+def test_list_restaurants_without_status_returns_all(client):
+    # Scenario #2c: status 파라미터 없이 호출 시 전체 반환
+    _create_restaurant(client, google_place_id="ChIJ-visited-3", status="VISITED")
+    _create_restaurant(client, google_place_id="ChIJ-want-3", status="WANT_TO_GO")
+
+    response = client.get("/restaurants")
+
+    assert response.status_code == 200
+    results = response.json()["data"]
+    statuses = {item["status"] for item in results}
+    assert "VISITED" in statuses
+    assert "WANT_TO_GO" in statuses
 
 
 def test_get_restaurant_by_existing_id(client):
@@ -89,6 +116,37 @@ def test_create_restaurant_duplicate_google_place_id_returns_409(client):
 
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "CONFLICT"
+
+
+def test_create_restaurant_with_visited_date(client):
+    # visited_date 저장 및 응답 확인
+    created = _create_restaurant(
+        client, status="VISITED", visited_date="2026-09-10"
+    )
+
+    assert created["visited_date"] == "2026-09-10"
+
+
+def test_create_restaurant_without_visited_date_defaults_to_null(client):
+    # visited_date 미제공 시 null
+    created = _create_restaurant(client)
+
+    assert created["visited_date"] is None
+
+
+def test_patch_restaurant_updates_visited_date(client):
+    # PATCH로 visited_date만 수정, 나머지 필드 유지
+    created = _create_restaurant(client)
+
+    response = client.patch(
+        f"/restaurants/{created['id']}",
+        json={"status": "VISITED", "visited_date": "2026-09-12"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["visited_date"] == "2026-09-12"
+    assert data["status"] == "VISITED"
 
 
 def test_patch_restaurant_updates_only_provided_fields(client):

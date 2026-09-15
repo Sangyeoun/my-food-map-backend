@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, String, Table, func
+from sqlalchemy import CheckConstraint, Column, Date, DateTime, ForeignKey, String, Table, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -32,6 +32,7 @@ class Restaurant(Base):
     latitude: Mapped[float] = mapped_column(nullable=False)
     longitude: Mapped[float] = mapped_column(nullable=False)
     status: Mapped[RestaurantStatus] = mapped_column(nullable=False)
+    visited_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     my_rating: Mapped[int | None] = mapped_column(nullable=True)
     memo: Mapped[str | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(
