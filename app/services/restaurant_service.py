@@ -34,6 +34,7 @@ class RestaurantService:
             latitude=data.latitude,
             longitude=data.longitude,
             status=data.status,
+            visited_date=data.visited_date,
             my_rating=data.my_rating,
             memo=data.memo,
             tags=tags,

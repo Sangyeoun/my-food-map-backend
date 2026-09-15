@@ -24,6 +24,7 @@ def _to_response(restaurant) -> RestaurantResponse:
         latitude=restaurant.latitude,
         longitude=restaurant.longitude,
         status=restaurant.status,
+        visited_date=restaurant.visited_date,
         my_rating=restaurant.my_rating,
         memo=restaurant.memo,
         tags=[tag.name for tag in restaurant.tags],
@@ -34,11 +35,11 @@ def _to_response(restaurant) -> RestaurantResponse:
 
 @router.get("")
 def list_restaurants(
-    status_filter: RestaurantStatus | None = None,
+    status: RestaurantStatus | None = None,
     service: RestaurantService = Depends(get_restaurant_service),
 ) -> dict[str, list[RestaurantResponse]]:
     # Design Ref: §4.2 GET /restaurants?status=
-    restaurants = service.list_restaurants(status=status_filter)
+    restaurants = service.list_restaurants(status=status)
     return {"data": [_to_response(r) for r in restaurants]}
 
 
